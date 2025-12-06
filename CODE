@@ -14,18 +14,21 @@ int leftMotorPin1 = 9;
 int leftMotorPin2 = 10;
 
 void setMotor(int enPin, int pin1, int pin2, int speed, bool forward) {
+  // initializes motors, all pins on the hbridge connector
   analogWrite(enPin, speed);
   digitalWrite(pin1, forward ? HIGH : LOW);
   digitalWrite(pin2, forward ? LOW : HIGH);
 }
 
 void stopMotor() {
+  // Sets up the stop motor function, which is used in the obstacle check
   analogWrite(enableRightMotor, 0); analogWrite(enableLeftMotor, 0);
   digitalWrite(rightMotorPin1, LOW); digitalWrite(rightMotorPin2, LOW);
   digitalWrite(leftMotorPin1, LOW); digitalWrite(leftMotorPin2, LOW);
 }
 
 long readDistance() {
+  // reads the distance observed by the u. sensor, which is read in the obstacle check
   digitalWrite(ULTRASONIC_TRIG_PIN, LOW); delayMicroseconds(2);
   digitalWrite(ULTRASONIC_TRIG_PIN, HIGH); delayMicroseconds(10);
   digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
@@ -33,6 +36,7 @@ long readDistance() {
 }
 
 void setup() {
+  // sets pins on arduino as input and output, 
   Serial.begin(9600);
   pinMode(enableRightMotor, OUTPUT); pinMode(rightMotorPin1, OUTPUT); pinMode(rightMotorPin2, OUTPUT);
   pinMode(enableLeftMotor, OUTPUT); pinMode(leftMotorPin1, OUTPUT); pinMode(leftMotorPin2, OUTPUT);
