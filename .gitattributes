@@ -1,2 +1,69 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+#define IR_SENSOR_RIGHT 11
+#define IR_SENSOR_LEFT 12
+#define ULTRASONIC_TRIG_PIN 4
+#define ULTRASONIC_ECHO_PIN 3
+#define MOTOR_SPEED 180
+#define TURN_SPEED 150
+#define OBSTACLE_DISTANCE_CM 15
+
+int enableRightMotor = 6;
+int rightMotorPin1 = 7;
+int rightMotorPin2 = 8;
+int enableLeftMotor = 5;
+int leftMotorPin1 = 9;
+int leftMotorPin2 = 10;
+
+void setMotor(int enPin, int pin1, int pin2, int speed, bool forward) {
+  analogWrite(enPin, speed);
+  digitalWrite(pin1, forward ? HIGH : LOW);
+  digitalWrite(pin2, forward ? LOW : HIGH);
+}
+
+void stopMotor() {
+  analogWrite(enableRightMotor, 0); analogWrite(enableLeftMotor, 0);
+  digitalWrite(rightMotorPin1, LOW); digitalWrite(rightMotorPin2, LOW);
+  digitalWrite(leftMotorPin1, LOW); digitalWrite(leftMotorPin2, LOW);
+}
+
+long readDistance() {
+  digitalWrite(ULTRASONIC_TRIG_PIN, LOW); delayMicroseconds(2);
+  digitalWrite(ULTRASONIC_TRIG_PIN, HIGH); delayMicroseconds(10);
+  digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
+  return pulseIn(ULTRASONIC_ECHO_PIN, HIGH) * 0.034 / 2;
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(enableRightMotor, OUTPUT); pinMode(rightMotorPin1, OUTPUT); pinMode(rightMotorPin2, OUTPUT);
+  pinMode(enableLeftMotor, OUTPUT); pinMode(leftMotorPin1, OUTPUT); pinMode(leftMotorPin2, OUTPUT);
+  pinMode(IR_SENSOR_RIGHT, INPUT); pinMode(IR_SENSOR_LEFT, INPUT);
+  pinMode(ULTRASONIC_TRIG_PIN, OUTPUT); pinMode(ULTRASONIC_ECHO_PIN, INPUT);
+  stopMotor();
+}
+
+void loop() {
+  // 1. Obstacle Check
+  if (readDistance() < OBSTACLE_DISTANCE_CM) {
+    stopMotor();
+    delay(500);
+    return;
+  }
+
+  // 2. Line Following
+  int R = digitalRead(IR_SENSOR_RIGHT);
+  int L = digitalRead(IR_SENSOR_LEFT);
+
+  if (L == LOW && R == LOW) { // Straight
+    setMotor(enableRightMotor, rightMotorPin1, rightMotorPin2, MOTOR_SPEED, true);
+    setMotor(enableLeftMotor, leftMotorPin1, leftMotorPin2, MOTOR_SPEED, true);
+  } else if (L == HIGH && R == LOW) { // Turn Left
+    setMotor(enableRightMotor, rightMotorPin1, rightMotorPin2, TURN_SPEED, true);
+    setMotor(enableLeftMotor, leftMotorPin1, leftMotorPin2, TURN_SPEED, false);
+  } else if (L == LOW && R == HIGH) { // Turn Right
+    setMotor(enableRightMotor, rightMotorPin1, rightMotorPin2, TURN_SPEED, false);
+    setMotor(enableLeftMotor, leftMotorPin1, leftMotorPin2, TURN_SPEED, true);
+  } else { // Lost Line
+    stopMotor();
+    delay(500);
+  }
+}
